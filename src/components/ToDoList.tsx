@@ -2,7 +2,7 @@ import React, { useEffect } from 'react';
 import useTodoStore from '../store';
 
 const TodoList: React.FC = () => {
-    const { tasks, loading, error, fetchTasks, deleteTask} = useTodoStore();
+    const { tasks, loading, error, fetchTasks, deleteTask, updateTaskStatus } = useTodoStore();
 
     useEffect(() => {
         fetchTasks();
@@ -19,6 +19,14 @@ const TodoList: React.FC = () => {
                     <div key={task.id}>
                         <h3>{task.attributes.title}</h3>
                         <p>Status: {task.attributes.status}</p>
+                        <select
+                            value={task.attributes.status}
+                            onChange={(e) => updateTaskStatus(task.id, e.target.value)}
+                        >
+                            <option value="Не выполнена">Не выполнена</option>
+                            <option value="В процессе">В процессе</option>
+                            <option value="Выполнено">Выполнено</option>
+                        </select>
                         <button onClick={() => deleteTask(task.id)}>Удалить</button>
                     </div>
                 ))}

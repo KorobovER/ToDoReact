@@ -23,6 +23,7 @@ interface TodoStore {
     fetchTasks: () => Promise<void>;
     addTask: (title: string, description: string) => Promise<void>;
     deleteTask: (id: number) => Promise<void>;
+    updateTaskStatus: (id: number, newStatus: string) => Promise<void>;
 }
 
 // Создаем хранилище
@@ -40,7 +41,7 @@ const useTodoStore = create<TodoStore>((set) => ({
             const data = await response.json();
             set({ tasks: data.data, loading: false });
         } catch (error) {
-            set({ error: error instanceof Error ? error.message : 'Failed to fetch tasks', loading: false });
+            set({ error: 'Failed to fetch tasks', loading: false });
         }
     },
 
@@ -56,7 +57,7 @@ const useTodoStore = create<TodoStore>((set) => ({
                 body: JSON.stringify({
                     data: {
                         title,
-                        status: 'not completed', // Статус по умолчанию
+                        status: 'not completed',
                     },
                 }),
             });
@@ -64,7 +65,7 @@ const useTodoStore = create<TodoStore>((set) => ({
             const newTask = await response.json();
             set((state) => ({ tasks: [...state.tasks, newTask.data], loading: false }));
         } catch (error) {
-            set({ error: error instanceof Error ? error.message : 'Failed to add task', loading: false });
+            set({ error: 'Failed to add task', loading: false });
         }
     },
     //Удаление задачи
@@ -82,8 +83,39 @@ const useTodoStore = create<TodoStore>((set) => ({
             }));
         } catch (error) {
             set({
-                error: error instanceof Error ? error.message : 'Failed to delete task',
+                error: 'Failed to delete task',
                 loading: false
+            });
+        }
+    },
+    // Метод для обновления статуса задачи
+    updateTaskStatus: async (id: number, newStatus: string) => {
+        set({ loading: true, error: null });
+        try {
+            const response = await fetch(`https://cms.laurence.host/api/tasks/${id}`, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    data: {
+                        status: newStatus,
+                    },
+                }),
+            });
+
+            if (!response.ok) throw new Error('Failed to update task status');
+
+            set((state) => ({
+                tasks: state.tasks.map(task =>
+                    task.id === id ? { ...task, attributes: { ...task.attributes, status: newStatus } } : task
+                ),
+                loading: false,
+            }));
+        } catch (error) {
+            set({
+                error: error instanceof Error ? error.message : 'Failed to update task status',
+                loading: false,
             });
         }
     },
